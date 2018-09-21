@@ -48,82 +48,86 @@ import java.util.jar.JarFile;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.FileUtils;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.Spec;
 
-
 /**
  *
- * @goal check-distribution
- *
+ * Check a set of spec artifact in a staging directory.
  * @author Romain Grecourt
  */
-public class CheckDistributionMojo extends AbstractMojo {
-    
+@Mojo(name = "check-distribution",
+      requiresProject = true,
+      defaultPhase = LifecyclePhase.PACKAGE)
+public final class CheckDistributionMojo extends AbstractMojo {
+
     /**
-     * include pattern
-     * 
-     * @parameter expression="${includes}" default-value="javax*.jar"
+     * Include pattern.
      */
-    protected String includes;
-    
+    @Parameter(property = "includes", defaultValue = "javax*.jar")
+    private String includes;
+
     /**
-     * exclude pattern
-     * 
-     * @parameter expression="${excludes}"
+     * Exclude pattern.
      */
-    protected String excludes;
-    
+    @Parameter(property = "excludes")
+    private String excludes;
+
     /**
-     * include pattern for inclusion
-     * 
-     * @required
-     * @parameter expression="${dir}"
+     * The directory containing the spec artifacts to process.
      */
-    protected File dir;
-    
+    @Parameter(property = "dir", required = true)
+    private File dir;
+
     /**
-     * Specs
-     * 
-     * @parameter expression="${specs}"
-     */    
-    protected List<Spec> specs;
-    
-    
-    private Spec getSpec(File f) throws IOException{
-        JarFile j = new JarFile(f);
-        Artifact a = Artifact.fromJar(j);
-        for(Spec s : specs){
-            if(s.getArtifact().equals(a)){
-                s.setMetadata(Metadata.fromJar(j));
+     * The specification configurations.
+     */
+    @Parameter(property = "specs", required = true)
+    private List<Spec> specs;
+
+    /**
+     * Find or create the specification configuration for the given artifact.
+     * @param file the artifact file to match
+     * @return the spec configuration
+     * @throws IOException if an error occurs while reading the JAR file entries
+     */
+    private Spec getSpec(final File file) throws IOException {
+        JarFile jar = new JarFile(file);
+        Artifact a = Artifact.fromJar(jar);
+        for (Spec s : specs) {
+            if (s.getArtifact().equals(a)) {
+                s.setMetadata(Metadata.fromJar(jar));
                 return s;
             }
         }
         Spec spec = new Spec();
         spec.setArtifact(a);
-        spec.setMetadata(Metadata.fromJar(j));
+        spec.setMetadata(Metadata.fromJar(jar));
         return spec;
     }
-    
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if(!dir.exists()){
+        if (!dir.exists()) {
             String msg = String.format(
                     "directory (%s) does not exist",
                     dir.getAbsolutePath());
             getLog().error(msg);
             throw new MojoFailureException(msg);
         }
-        
+
         List<File> jars = Collections.EMPTY_LIST;
         try {
             jars = FileUtils.getFiles(dir, includes, excludes);
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
         }
-        
+
         for (File jar : jars) {
             try {
                 Spec spec = getSpec(jar);
@@ -133,7 +137,7 @@ public class CheckDistributionMojo extends AbstractMojo {
                     System.out.println("");
                     System.out.println(spec.getArtifact().toString());
                     String specDesc = spec.toString();
-                    if(!specDesc.isEmpty()){
+                    if (!specDesc.isEmpty()) {
                         System.out.println(spec.toString());
                     }
                     for (int i = 0; i < spec.getErrors().size(); i++) {

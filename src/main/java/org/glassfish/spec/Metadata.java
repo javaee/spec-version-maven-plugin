@@ -48,32 +48,93 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
 /**
- *
+ * Represents an API JAR {@code MANIFEST.MF} entries.
  * @author Romain Grecourt
  */
 public final class Metadata {
+
+    /**
+     * Bundle Symbolic Name.
+     */
     private String bundleSymbolicName;
+
+    /**
+     * Bundle Spec Version.
+     */
     private String bundleSpecVersion;
+
+    /**
+     * Bundle Version.
+     */
     private String bundleVersion;
+
+    /**
+     * Jar Extension Name.
+     */
     private String jarExtensionName;
+
+    /**
+     * Jar Specification Version.
+     */
     private String jarSpecificationVersion;
+
+    /**
+     * Jar Implementation Version.
+     */
     private String jarImplementationVersion;
+
+    /**
+     * Properties.
+     */
     private Properties properties = null;
-    
+
+    /**
+     * Entry name for Bundle Symbolic Name.
+     */
     public static final String BUNDLE_SYMBOLIC_NAME = "Bundle-SymbolicName";
+
+    /**
+     * Entry name for Bundle Spec Version.
+     */
     public static final String BUNDLE_SPEC_VERSION = "BundleSpecVersion";
+
+    /**
+     * Entry name for Bundle Version.
+     */
     public static final String BUNDLE_VERSION = "Bundle-Version";
+
+    /**
+     * Entry name for Jar Extension Name.
+     */
     public static final String JAR_EXTENSION_NAME = "Extension-Name";
-    public static final String JAR_SPECIFICATION_VERSION = "Specification-Version";
-    public static final String JAR_IMPLEMENTATION_VERSION = "Implementation-Version";
-    private List<String> errors = new LinkedList<String>();
-    
+
+    /**
+     * Entry name for Jar Specification Version.
+     */
+    public static final String JAR_SPECIFICATION_VERSION =
+            "Specification-Version";
+
+    /**
+     * Entry name for Jar Implementation Version.
+     */
+    public static final String JAR_IMPLEMENTATION_VERSION =
+            "Implementation-Version";
+
+    /**
+     * List of collected errors.
+     */
+    private final List<String> errors;
+
+    /**
+     * All the metadata entry names.
+     */
     private static final String[] KEYS = {
         BUNDLE_SYMBOLIC_NAME,
         BUNDLE_SPEC_VERSION,
@@ -83,27 +144,35 @@ public final class Metadata {
         JAR_IMPLEMENTATION_VERSION
     };
 
-    Metadata(
-            String _bundleSymbolicName,
-            String _bundleSpecVersion,
-            String _bundleVersion,
-            String _jarExtensionName,
-            String _jarSpecificationVersion,
-            String _jarImplementationVersion) {
+    /**
+     * Create a new {@link Metadata} instance.
+     * @param bsn bundle symbolic name
+     * @param bsv bundle spec version
+     * @param bv bundle version
+     * @param jen jar extension name
+     * @param jsv jar spec version
+     * @param jiv jar implementation version
+     * @param errs errors
+     */
+    Metadata(final String bsn, final String bsv, final String bv,
+            final String jen, final String jsv, final String jiv,
+            final List<String> errs) {
 
-        this.bundleSymbolicName = 
-                _bundleSymbolicName != null ? _bundleSymbolicName : "";
-        this.bundleSpecVersion = 
-                _bundleSpecVersion != null ? _bundleSpecVersion: "";
+        this.bundleSymbolicName =
+                bsn != null ? bsn : "";
+        this.bundleSpecVersion =
+                bsv != null ? bsv : "";
         this.bundleVersion =
-                _bundleVersion != null ? _bundleVersion : "";
-        this.jarExtensionName = 
-                _jarExtensionName != null ? _jarExtensionName : "";
-        this.jarSpecificationVersion = 
-                _jarSpecificationVersion != null ? _jarSpecificationVersion : "";
-        this.jarImplementationVersion = 
-                _jarImplementationVersion != null ? _jarImplementationVersion : "";
+                bv != null ? bv : "";
+        this.jarExtensionName =
+                jen != null ? jen : "";
+        this.jarSpecificationVersion =
+                jsv != null ? jsv : "";
+        this.jarImplementationVersion =
+                jiv != null ? jiv : "";
 
+        Objects.requireNonNull(errs, "errors in null");
+        this.errors = errs;
         this.properties = new Properties();
         properties.put("spec.bundle.symbolic-name", bundleSymbolicName);
         properties.put("spec.bundle.spec.version", bundleSpecVersion);
@@ -112,28 +181,32 @@ public final class Metadata {
         properties.put("spec.specification.version", jarSpecificationVersion);
         properties.put("spec.implementation.version", jarImplementationVersion);
     }
-    
-    Metadata(
-            String _bundleSymbolicName,
-            String _bundleSpecVersion,
-            String _bundleVersion,
-            String _jarExtensionName,
-            String _jarSpecificationVersion,
-            String _jarImplementationVersion,
-            List<String> _errors) {
-        
-        this(_bundleSymbolicName,
-                _bundleSpecVersion,
-                _bundleVersion,
-                _jarExtensionName,
-                _jarSpecificationVersion,
-                _jarImplementationVersion);
-        this.errors = _errors;
+
+    /**
+     * Create a new {@link Metadata} instance.
+     * @param bsn bundle symbolic name
+     * @param bsv bundle spec version
+     * @param bv bundle version
+     * @param jen jar extension name
+     * @param jsv jar spec version
+     * @param jiv jar implementation version
+     */
+    Metadata(final String bsn, final String bsv, final String bv,
+            final String jen, final String jsv, final String jiv) {
+
+        this(bsn, bsv, bv, jen, jsv, jiv, new LinkedList<String>());
     }
-    
-    // TODO extract exported package version
-    // to use with the fromJar approach
-    private static String getBundleSpecVersion(String headers) {
+
+    /**
+     * Derive the Bundle Spec Version from OSGi headers.
+     * @param headers the headers to process
+     * @return the bundle spec version if found, otherwise an empty string.
+     */
+    @SuppressWarnings("checkstyle:LineLength")
+    private static String getBundleSpecVersion(final String headers) {
+
+        // TODO extract exported package version
+        // to use with the fromJar approach
         Map<String, List<String>> res = new HashMap<String, List<String>>();
 
         String[] headersTokens = headers.split(";");
@@ -149,17 +222,18 @@ public final class Metadata {
                         String[] lastToken = headersTokens[i].split(",");
                         curHeader.add(lastToken[0]);
                         res.put(key, new ArrayList<String>(curHeader));
-                        
                         if (headersTokens[i].length() > lastToken[0].length()) {
                             key = headersTokens[i].substring(lastToken[0].length() + 1);
                             curHeader.clear();
                         }
                     } else if (headersTokens[i].startsWith("uses:=")) {
-                        if (i != headersTokens.length - 1 && !headersTokens[i+1].startsWith("version=")) {
+                        if (i != headersTokens.length - 1
+                                && !headersTokens[i + 1].startsWith("version=")) {
                             String[] lastToken = headersTokens[i].split(",");
-                            curHeader.add(headersTokens[i].substring(0, headersTokens[i].length() - (lastToken[lastToken.length - 1].length())));
+                            curHeader.add(headersTokens[i].substring(0,
+                                    headersTokens[i].length()
+                                            - (lastToken[lastToken.length - 1].length())));
                             res.put(key, new ArrayList<String>(curHeader));
-
                             key = lastToken[lastToken.length - 1];
                             curHeader.clear();
                         } else {
@@ -172,17 +246,24 @@ public final class Metadata {
             res.put(headers, Collections.EMPTY_LIST);
         }
         return "";
-    }    
+    }
 
-    public static Metadata fromJar(JarFile jar) throws IOException {
+    /**
+     * Create a new {@link Metadata} instance from a JAR file.
+     * @param jar the JAR file to process
+     * @return the created {@link Metadata} instance
+     * @throws IOException if an error occurs while reading JAR entries
+     */
+    @SuppressWarnings("checkstyle:MagicNumber")
+    public static Metadata fromJar(final JarFile jar) throws IOException {
         ZipEntry e = jar.getEntry("META-INF/MANIFEST.MF");
         InputStream is = jar.getInputStream(e);
         Manifest manifest = new Manifest(is);
 
         List<String> errors = new LinkedList<String>();
         String[] mdata = new String[KEYS.length];
-        for (int i=0 ; i<KEYS.length ; i++) {
-            if (KEYS[i].equals(BUNDLE_SPEC_VERSION)){
+        for (int i = 0; i < KEYS.length; i++) {
+            if (KEYS[i].equals(BUNDLE_SPEC_VERSION)) {
                 // skip bundleSpecVersion
                 continue;
             }
@@ -195,46 +276,74 @@ public final class Metadata {
                         .toString());
             }
         }
-        
+
         // TODO parse exported-packages to resolve bundleSpecVersion
-        return new Metadata(
-                mdata[0],
-                mdata[1],
-                mdata[2],
-                mdata[3],
-                mdata[4],
-                mdata[5],
-                errors);
+        return new Metadata(mdata[0], mdata[1], mdata[2], mdata[3], mdata[4],
+                mdata[5], errors);
     }
 
+    /**
+     * Get the bundle symbolic name entry.
+     * @return bundle symbolic name
+     */
     public String getBundleSymbolicName() {
         return bundleSymbolicName;
     }
 
+    /**
+     * Get the bundle spec version entry.
+     * @return bundle spec version
+     */
     public String getBundleSpecVersion() {
         return bundleSpecVersion;
     }
 
+    /**
+     * Get the bundle version entry.
+     * @return bundle version
+     */
     public String getBundleVersion() {
         return bundleVersion;
     }
 
+    /**
+     * Get the jar extension name entry.
+     *
+     * @return jar extension name
+     */
     public String getJarExtensionName() {
         return jarExtensionName;
     }
 
+    /**
+     * Get the jar specification version entry.
+     * @return jar specification version
+     */
     public String getJarSpecificationVersion() {
         return jarSpecificationVersion;
     }
 
+    /**
+     * Get the jar implementation version entry.
+     *
+     * @return jar implementation version
+     */
     public String getjarImplementationVersion() {
         return jarImplementationVersion;
     }
 
+    /**
+     * Get the metadata properties.
+     * @return metadata properties
+     */
     public Properties getProperties() {
         return properties;
     }
 
+    /**
+     * Get the metadata errors.
+     * @return the list of errors
+     */
     public List<String> getErrors() {
         return errors;
     }

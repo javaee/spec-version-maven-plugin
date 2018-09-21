@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2013-2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -38,60 +38,7 @@
  * holder.
  */
 
-package org.glassfish.spec.maven;
-
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Properties;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
-import org.glassfish.spec.Artifact;
-import org.glassfish.spec.Spec;
-
 /**
- * Generate spec properties.
- * @author Romain Grecourt
+ * Utilities to enforce API metadata.
  */
-@Mojo(name = "set-spec-properties",
-      requiresProject = true,
-      defaultPhase = LifecyclePhase.VALIDATE)
-public final class SetPropertiesMojo extends AbstractMojo {
-
-    /**
-     * The maven project.
-     */
-    @Parameter(defaultValue = "${project}", required = true, readonly = true)
-    private MavenProject project;
-
-    /**
-     * The spec.
-     */
-    @Parameter(property = "spec", required = true)
-    private Spec spec;
-
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        spec.setArtifact(new Artifact(
-                project.getGroupId(),
-                project.getArtifactId(),
-                project.getVersion()));
-
-        Properties specProps = spec.getMetadata().getProperties();
-
-        getLog().info("");
-        getLog().info("-- spec properties --");
-        Iterator<Entry<Object, Object>> it = specProps.entrySet().iterator();
-        while (it.hasNext()) {
-            Entry<Object, Object> e =  it.next();
-            getLog().info(e.getKey() + " = " + e.getValue());
-        }
-        getLog().info("");
-
-        project.getProperties().putAll(specProps);
-    }
-}
+package org.glassfish.spec;

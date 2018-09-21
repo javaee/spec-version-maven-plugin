@@ -48,9 +48,9 @@ import org.glassfish.spec.test.TestSpec;
  * @author Romain Grecourt
  */
 public class Courgette extends TestSpec {
+
     public Courgette() {
-        super(
-                new Artifact(
+        super(new Artifact(
                 "${courgette.groupId}",
                 "${courgette.artifactId}",
                 "${courgette.mavenVersion}"),
@@ -64,7 +64,7 @@ public class Courgette extends TestSpec {
                 "${courgette.apiPackage}",
                 "${courgette.implNamespace}",
                 "${courgette.jarType}",
-                Boolean.valueOf("${courgette.nonFinal}").booleanValue());
+                Boolean.parseBoolean("${courgette.nonFinal}"));
     }
 
     @Override

@@ -47,101 +47,190 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
-
 /**
+ * Represent the API JAR file as a Maven artifact.
  *
  * @author Romain Grecourt
  */
 public final class Artifact {
 
+    /**
+     * Artifact groupId.
+     */
     private String groupId;
+
+    /**
+     * Artifact artifactId.
+     */
     private String artifactId;
+
+    /**
+     * Artifact version.
+     */
     private ArtifactVersion version;
+
+    /**
+     * Artifact build number.
+     */
     private String buildNumber;
-    
-    private static final String[] buildNumberSeparators = new String[] {"m", "b"};
+
+    /**
+     * Characters used to separate the build number within the version.
+     */
+    private static final String[] BUILD_NUMBER_SEPARATORS = new String[] {
+        "m", "b"
+    };
+
+    /**
+     * The Maven SNAPSHOT qualifier.
+     */
     public static final String SNAPSHOT_QUALIFIER = "SNAPSHOT";
-    
-    public static String stripSnapshotQualifier(String qualifier) {
+
+    /**
+     * Strip the SNAPSHOT qualifier from a given qualifier.
+     * @param qualifier the qualifier to process
+     * @return a non SNAPSHOT qualifier
+     */
+    public static String stripSnapshotQualifier(final String qualifier) {
         if (qualifier != null) {
             if (qualifier.endsWith("-" + SNAPSHOT_QUALIFIER)) {
-                qualifier = qualifier.replace("-" + SNAPSHOT_QUALIFIER, "");
+                return qualifier.replace("-" + SNAPSHOT_QUALIFIER, "");
             }
             return qualifier;
         }
         return null;
     }
-    
-    private static String getBuildNumber(String qualifier) {
-        qualifier = stripSnapshotQualifier(qualifier);
-        if (qualifier != null) {
-            for (String c : buildNumberSeparators) {
-                if (qualifier.contains(c)) {
-                    return qualifier.substring(qualifier.lastIndexOf(c) + 1);
+
+    /**
+     * Parse a version qualifier and extract the build number.
+     * @param qualifier the qualifier to process
+     * @return the build number, or {@code null} if none found
+     */
+    private static String getBuildNumber(final String qualifier) {
+        String normalizedQualifier = stripSnapshotQualifier(qualifier);
+        if (normalizedQualifier != null) {
+            for (String c : BUILD_NUMBER_SEPARATORS) {
+                if (normalizedQualifier.contains(c)) {
+                    return normalizedQualifier.substring(
+                            normalizedQualifier.lastIndexOf(c) + 1);
                 }
             }
         }
         return null;
     }
-    
-    public Artifact(){
+
+    /**
+     * Create a new {@link Artifact} instance.
+     */
+    public Artifact() {
     }
 
-    public Artifact(String _groupId, String _artifactId, String _version) {
-        this.groupId = _groupId;
-        this.artifactId = _artifactId;
-        this.version = new DefaultArtifactVersion(_version);
+    /**
+     * Create a new {@link Artifact} instance.
+     * @param gId the artifact groupId
+     * @param aId the artifact artifactId
+     * @param v the artifact version
+     */
+    public Artifact(final String gId, final String aId, final String v) {
+        this.groupId = gId;
+        this.artifactId = aId;
+        this.version = new DefaultArtifactVersion(v);
         this.buildNumber = getBuildNumber(version.getQualifier());
     }
 
+    /**
+     * Get the artifactId for this artifact.
+     * @return the artifactId
+     */
     public String getArtifactId() {
         return artifactId;
     }
 
+    /**
+     * Get the groupId for this artifact.
+     * @return the groupId
+     */
     public String getGroupId() {
         return groupId;
     }
 
+    /**
+     * Get the version for this artifact.
+     * @return the version
+     */
     public ArtifactVersion getVersion() {
         return version;
     }
-    
-    public String getAbsoluteVersion(){
+
+    /**
+     * Get the normalized release version for this artifact.
+     * @return the version
+     */
+    public String getAbsoluteVersion() {
         return stripSnapshotQualifier(version.toString());
     }
 
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
+    /**
+     * Set the artifactId of this artifact.
+     * @param aId the artifactId value to use
+     */
+    public void setArtifactId(final String aId) {
+        this.artifactId = aId;
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    /**
+     * Set the groupId of this artifact.
+     * @param gId the artifactId value to use
+     */
+    public void setGroupId(final String gId) {
+        this.groupId = gId;
     }
 
-    public void setVersion(String version) {
-        this.version = new DefaultArtifactVersion(version);
+    /**
+     * Set the version of this artifact.
+     * @param v the artifactId value to use
+     */
+    public void setVersion(final String v) {
+        this.version = new DefaultArtifactVersion(v);
         this.buildNumber = getBuildNumber(this.version.getQualifier());
     }
-    
+
+    /**
+     * Get the build number of this artifact.
+     * @return the build number
+     */
     public String getBuildNumber() {
         return buildNumber;
     }
-    
-    private static ZipEntry getPomPropertiesFile(JarFile jar){
+
+    /**
+     * Get the {@link ZipEntry} for {@code pom.properties} in the given
+     * JAR file.
+     * @param jar the jar file to process
+     * @return the {@link ZipEntry} if found, {@code null} otherwise
+     */
+    private static ZipEntry getPomPropertiesFile(final JarFile jar) {
         Enumeration<JarEntry> entries = jar.entries();
-        while(entries.hasMoreElements()){
+        while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();
-            if(entry.getName().endsWith("pom.properties")){
+            if (entry.getName().endsWith("pom.properties")) {
                 return entry;
             }
         }
         return null;
     }
-    
-    public static Artifact fromJar(JarFile jar) throws IOException {
+
+    /**
+     * Create an {@link Artifact} instance from a given JAR file.
+     * @param jar the jar file to process
+     * @return the create {@link Artifact} instance
+     * @throws IOException if an error occurs while reading JAR file entries
+     */
+    public static Artifact fromJar(final JarFile jar) throws IOException {
         ZipEntry entry = getPomPropertiesFile(jar);
         if (entry == null) {
             throw new RuntimeException(
@@ -172,7 +261,7 @@ public final class Artifact {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (obj == null) {
             return false;
         }
@@ -180,15 +269,39 @@ public final class Artifact {
             return false;
         }
         final Artifact other = (Artifact) obj;
-        if ((this.groupId == null) ? (other.groupId != null) : !this.groupId.equals(other.groupId)) {
+        if (this.groupId == null && other.groupId != null) {
+                return false;
+        } else if (this.groupId != null
+                && !this.groupId.equals(other.groupId)) {
             return false;
         }
-        if ((this.artifactId == null) ? (other.artifactId != null) : !this.artifactId.equals(other.artifactId)) {
+        if (this.artifactId == null && other.artifactId != null) {
+            return false;
+        } else if (this.artifactId != null
+                && !this.artifactId.equals(other.artifactId)) {
             return false;
         }
-        if (this.version != other.version && (this.version == null || !this.version.equals(other.version))) {
+        if (this.version == null && other.version != null) {
+            return false;
+        } else if (this.version != null
+                && !this.version.equals(other.version)) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    @SuppressWarnings("checkstyle:MagicNumber")
+    public int hashCode() {
+        int hash = 7;
+        hash = 71 * hash + (this.groupId != null
+                ? this.groupId.hashCode() : 0);
+        hash = 71 * hash + (this.artifactId != null
+                ? this.artifactId.hashCode() : 0);
+        hash = 71 * hash + (this.version != null
+                ? this.version.hashCode() : 0);
+        hash = 71 * hash + (this.buildNumber != null
+                ? this.buildNumber.hashCode() : 0);
+        return hash;
     }
 }

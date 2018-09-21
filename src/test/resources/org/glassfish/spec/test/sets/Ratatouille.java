@@ -49,8 +49,7 @@ import org.glassfish.spec.test.TestSpec;
  */
 public class Ratatouille extends TestSpec {
     public Ratatouille() {
-        super(
-                new Artifact(
+        super(new Artifact(
                 "${ratatouille.groupId}",
                 "${ratatouille.artifactId}",
                 "${ratatouille.mavenVersion}"),
@@ -64,7 +63,7 @@ public class Ratatouille extends TestSpec {
                 "${ratatouille.apiPackage}",
                 "${ratatouille.implNamespace}",
                 "${ratatouille.jarType}",
-                Boolean.valueOf("${ratatouille.nonFinal}").booleanValue());
+                Boolean.parseBoolean("${ratatouille.nonFinal}"));
     }
 
     @Override

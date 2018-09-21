@@ -69,6 +69,7 @@ public abstract class TestSpec extends Spec {
             String jarType,
             boolean nonFinal) {
         super();
+        setGroupIdPrefix("javax.");
         setArtifact(artifact);
         setSpecVersion(specVersion);
         setNewSpecVersion(newSpecVersion);
@@ -82,7 +83,7 @@ public abstract class TestSpec extends Spec {
         setJarType(jarType);
         setNonFinal(nonFinal);
     }
-    
+
     public abstract String getExpectedBundleVersion();
     public abstract String getExpectedBundleSpecVersion();
     public abstract String getExpectedBundleSymbolicName();
@@ -90,17 +91,17 @@ public abstract class TestSpec extends Spec {
     public abstract String getExpectedJarImplementationVersion();
     public abstract String getExpectedJarSpecificationVersion();
     public abstract String getJarPath();
-    
+
     public Spec getSpec(){
         return this;
     }
-    
+
     private static void positive(String key, String expected, String value){
         String msg = "Testing "+key;
         Assert.assertNotNull(msg,value);
         Assert.assertEquals(msg,expected,value);
     }
-    
+
     public void assertMetadata(){
         Assert.assertNotNull(getMetadata());
         positive(
@@ -128,7 +129,7 @@ public abstract class TestSpec extends Spec {
                 getExpectedJarImplementationVersion(),
                 getMetadata().getjarImplementationVersion());
     }
-    
+
     public void assertMetadataFromJar() {
         try {
             File f = new File(getJarPath());

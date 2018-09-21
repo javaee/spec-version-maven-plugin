@@ -52,12 +52,12 @@ import org.junit.Test;
  */
 public class FinalStandaloneImpl {
     private static TestSpec spec;
-    
+
     @BeforeClass
     public static void init(){
         spec = new Ratatouille();
     }
-    
+
     @Test
     public void verifySpec() {
         spec.verify();
@@ -76,9 +76,9 @@ public class FinalStandaloneImpl {
             Assert.fail(msg.toString());
         }
     }
-    
+
     @Test
     public void verifyMetadata(){
         spec.assertMetadata();
-    }    
+    }
 }

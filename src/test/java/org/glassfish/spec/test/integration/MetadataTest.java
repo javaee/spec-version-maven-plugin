@@ -51,22 +51,22 @@ import org.junit.Test;
  * @author Romain Grecourt
  */
 public class MetadataTest {
-    
+
     @Test
     public void verifyAubergineMetadata() {
         new Aubergine().assertMetadataFromJar();
     }
-    
+
     @Test
     public void verifyCourgetteMetadata() {
         new Courgette().assertMetadataFromJar();
     }
-    
+
     @Test
     public void verifyRatatouilleMetadata() {
         new Ratatouille().assertMetadataFromJar();
     }
-    
+
     @Test
     public void verifyMoussakaMetadata() {
         new Moussaka().assertMetadataFromJar();

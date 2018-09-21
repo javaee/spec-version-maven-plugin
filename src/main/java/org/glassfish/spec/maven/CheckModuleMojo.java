@@ -46,53 +46,54 @@ import java.util.jar.JarFile;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.Spec;
 
-
 /**
  *
- * @goal check-module
- * @phase package
- *
+ * Maven Goal to enforce spec rules and fail the build.
  * @author Romain Grecourt
  */
-public class CheckModuleMojo extends AbstractMojo {
+@Mojo(name = "check-module",
+      requiresProject = true,
+      defaultPhase = LifecyclePhase.PACKAGE)
+public final class CheckModuleMojo extends AbstractMojo {
+
     /**
-     * @parameter default-value="${project}"
-     * @required
-     * @readonly
+     * The maven project.
      */
-    protected MavenProject project;
-    
+    @Parameter(defaultValue = "${project}", required = true, readonly = true)
+    private MavenProject project;
+
     /**
-     * Module to verify
-     * 
-     * @parameter expression="${module}"
+     * Module to verify.
      */
-    protected File module;
-    
+    @Parameter(property = "module")
+    private File module;
+
     /**
-     * Ignore failures
-     * 
-     * @parameter expression="${ignoreErrors}"
+     * Ignore failures.
      */
-    protected boolean ignoreErrors;
-    
+    @Parameter(property = "ignoreErrors", defaultValue = "false")
+    private boolean ignoreErrors;
+
     /**
-     * Spec
-     * 
-     * @parameter expression="${spec}"
-     */    
-    protected Spec spec;
-    
+     * Spec.
+     */
+    @Parameter(property = "spec", required = true)
+    private Spec spec;
+
     @Override
+    @SuppressWarnings("checkstyle:LineLength")
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if(module ==null || !module.exists()){
+        if (module == null || !module.exists()) {
             module = project.getArtifact().getFile();
-            if(module == null || !module.exists()){
+            if (module == null || !module.exists()) {
                 getLog().error("There is no jar to verify, try using mvn package first.");
                 throw new MojoFailureException("no jar to verify");
             }
@@ -123,7 +124,7 @@ public class CheckModuleMojo extends AbstractMojo {
                             .toString());
                 }
                 System.out.println("");
-                if(!ignoreErrors){
+                if (!ignoreErrors) {
                     throw new MojoFailureException("spec verification failed.");
                 }
             }

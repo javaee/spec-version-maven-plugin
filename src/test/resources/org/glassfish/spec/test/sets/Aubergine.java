@@ -48,9 +48,9 @@ import org.glassfish.spec.test.TestSpec;
  * @author Romain Grecourt
  */
 public class Aubergine extends TestSpec {
+
     public Aubergine() {
-        super(
-                new Artifact(
+        super(new Artifact(
                 "${aubergine.groupId}",
                 "${aubergine.artifactId}",
                 "${aubergine.mavenVersion}"),
@@ -64,7 +64,7 @@ public class Aubergine extends TestSpec {
                 "${aubergine.apiPackage}",
                 "${aubergine.implNamespace}",
                 "${aubergine.jarType}",
-                Boolean.valueOf("${aubergine.nonFinal}").booleanValue());
+                Boolean.parseBoolean("${aubergine.nonFinal}"));
     }
 
     @Override

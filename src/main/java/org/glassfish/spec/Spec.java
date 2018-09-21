@@ -45,6 +45,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -52,51 +53,154 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 /**
- *
+ * The API specification.
  * @author Romain Grecourt
  */
 public class Spec {
 
+    /**
+     * The Spec Artifact.
+     */
     private Artifact artifact;
+
+    /**
+     * The Spec Artifact Metadata.
+     */
     private Metadata metadata;
+
+    /**
+     * The Spec JAR file.
+     */
     private JarFile jar;
-    private String specVersion;
+
+    /**
+     * The Spec Version.
+     */
+    private String specVersion = null;
+
+    /**
+     * The new Spec Version (for non final API).
+     */
     private String newSpecVersion;
+
+    /**
+     * The Spec Implementation Version.
+     */
     private String specImplVersion;
+
+    /**
+     * The Spec Implementation Version.
+     */
     private String implVersion;
+
+    /**
+     * The Spec Implementation Version.
+     */
     private String newImplVersion;
+
+    /**
+     * The Spec Build Number.
+     */
     private String specBuild;
+
+    /**
+     * The Spec Implementation Builder Number.
+     */
     private String implBuild;
-    private String apiPackage;
+
+    /**
+     * The Spec API Package.
+     */
+    private String apiPackage = null;
+
+    /**
+     * The Spec Implementation Namespace.
+     */
     private String implNamespace;
+
+    /**
+     * The Spec GroupId Prefix.
+     */
+    private String groupIdPrefix = "javax.";
+
+    /**
+     * The Spec Final flag.
+     */
     private boolean nonFinal = false;
+
+    /**
+     * The Spec Jar Type see {@link JarType}.
+     */
     private JarType jarType = JarType.api;
-    
-    public static enum JarType {
+
+    /**
+     * The different kind of Spec Jar files.
+     */
+    public enum JarType {
+        /**
+         * A Specification with a separate API jar file.
+         */
         api,
+        /**
+         * A specification with a standalone API jar file.
+         */
         impl
     }
-    
-    private List<String> errors = new LinkedList<String>();
+
+    /**
+     * The errors during spec verification.
+     */
+    private final List<String> errors = new LinkedList<String>();
+
+    /**
+     * Constant for Non Final API Build Spec Separator.
+     */
     private static final String NONFINAL_BUILD_SEPARATOR_SPEC = ".99.";
-    private static final String NONFINAL_BUILD_SEPARATOR = NONFINAL_BUILD_SEPARATOR_SPEC + "b";
-    private static final String JCP_VERSION_RULE = "JCP spec version number must be of the form <major>.<minor>";
+
+    /**
+     * Constant for Non Final API Build Separator.
+     */
+    private static final String NONFINAL_BUILD_SEPARATOR =
+            NONFINAL_BUILD_SEPARATOR_SPEC + "b";
+
+    /**
+     * Constant for JCP Version Rule.
+     */
+    private static final String JCP_VERSION_RULE =
+            "JCP spec version number must be of the form <major>.<minor>";
+
+    /**
+     * ArtifactId suffix for Spec with {@code api} JarType.
+     */
     public static final String API_SUFFIX = "-api";
 
+    /**
+     * Create a new instance of {@code Spec}.
+     */
     public Spec() {
-        
     }
 
-    public void read(JarFile _jar) throws IOException {
-        this.jar = _jar;
+    /**
+     * Populate the spec artifact and metadata from the given JAR file.
+     * @param jarfile the JAR file to process
+     * @throws IOException if an error occurs while reading the JAR file
+     */
+    public void read(final JarFile jarfile) throws IOException {
+        this.jar = jarfile;
         this.artifact = Artifact.fromJar(jar);
         this.metadata = Metadata.fromJar(jar);
         this.errors.clear();
         this.errors.addAll(metadata.getErrors());
     }
 
-    private void checkClasses(JarFile jf, String... pkgs) {
-        Enumeration<JarEntry> e = jf.entries();
+    /**
+     * Verify that the classes inside the given jarFile match the right package.
+     * @param jarfile the JAR file to process
+     * @param pkgs the packages to match
+     */
+    @SuppressWarnings("checkstyle:MagicNumber")
+    private void checkClasses(final JarFile jarfile, final String... pkgs) {
+        Enumeration<JarEntry> e = jarfile.entries();
         Set<String> badPackages = new HashSet<String>();
         entries:
         while (e.hasMoreElements()) {
@@ -130,27 +234,35 @@ public class Spec {
             // see if we've already complained about it
             if (!badPackages.contains(name)) {
                 badPackages.add(name);
-                if (name.startsWith("javax.")) {
+                if (name.startsWith(groupIdPrefix)) {
                     errors.add(String.format(
-                            "ERROR: jar file includes class in wrong package (%s)",
-                            name));
+                        "ERROR: jar file includes class in wrong package (%s)",
+                        name));
                 }
             }
         }
     }
 
+    /**
+     * Perform the Spec verification.
+     */
+    @SuppressWarnings({
+        "checkstyle:MethodLength",
+        "checkstyle:LineLength"
+    })
     public void verify() {
         this.errors.clear();
         this.errors.addAll(getMetadata().getErrors());
-        
+
         StringBuilder configIssues = new StringBuilder();
-        if(specVersion == null || specVersion.isEmpty()){
+        if (specVersion == null || specVersion.isEmpty()) {
             configIssues.append(" spec-version");
         }
-        if(apiPackage == null || apiPackage.isEmpty()){
+        if (apiPackage == null || apiPackage.isEmpty()) {
             configIssues.append(" api-package");
         }
-        if(nonFinal && (newSpecVersion == null || newSpecVersion.isEmpty())){
+        if (nonFinal
+                && (newSpecVersion == null || newSpecVersion.isEmpty())) {
             configIssues.append(" new-spec-version");
         }
         if (jarType.equals(JarType.impl)) {
@@ -160,23 +272,24 @@ public class Spec {
             if (implVersion == null || implVersion.isEmpty()) {
                 configIssues.append(" impl-version");
             }
-            if (nonFinal && (newImplVersion == null || newImplVersion.isEmpty())){
+            if (nonFinal
+                    && (newImplVersion == null || newImplVersion.isEmpty())) {
                 configIssues.append(" new-impl-version");
             }
-        } else if (!nonFinal){
+        } else if (!nonFinal) {
             if (specImplVersion == null || specImplVersion.isEmpty()) {
                 configIssues.append(" spec-impl-version");
             }
         }
-        
+
         // no need to continue further...
-        if(configIssues.length() > 0){
+        if (configIssues.length() > 0) {
             configIssues.insert(0, "ERROR: missing configuration (");
             configIssues.append(" )");
             errors.add(configIssues.toString());
             return;
         }
-        
+
         // verify that specVersion is <major>.<minor>
         if (!specVersion.matches("[0-9]+\\.[0-9]+")) {
             errors.add(String.format(
@@ -195,7 +308,7 @@ public class Spec {
                     getMetadata().getjarImplementationVersion(),
                     artifact.getAbsoluteVersion()));
         }
-        
+
         // verify that Extension-Name == apiPackage
         if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
             errors.add(String.format(
@@ -215,8 +328,9 @@ public class Spec {
                         metadata.getBundleVersion(),
                         artifact.getAbsoluteVersion()));
             }
-            
-            if (!getMetadata().getJarSpecificationVersion().equals(specVersion)){
+
+            if (!getMetadata()
+                    .getJarSpecificationVersion().equals(specVersion)) {
                 errors.add(String.format(
                         "WARNING: %s (%s) should be %s",
                         Metadata.JAR_SPECIFICATION_VERSION,
@@ -226,7 +340,7 @@ public class Spec {
 
             // TODO check BundleSpecVersion == JarSpec
         } else {
-            
+
             // verify Bundle-Version
             ArtifactVersion av = new DefaultArtifactVersion(specVersion);
             String bundleVersion = av.getMajorVersion()
@@ -242,9 +356,9 @@ public class Spec {
                         metadata.getBundleVersion(),
                         bundleVersion));
             }
-            
-            String expectedJarSpecVersion = 
-                    specVersion+NONFINAL_BUILD_SEPARATOR_SPEC+specBuild;
+
+            String expectedJarSpecVersion =
+                    specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + specBuild;
             if (!getMetadata().getJarSpecificationVersion().equals(
                     expectedJarSpecVersion)) {
                 errors.add(String.format(
@@ -258,11 +372,12 @@ public class Spec {
         }
 
         if (jarType.equals(JarType.api)) {
-            // verify that groupId starts with javax.
-            if (!artifact.getGroupId().startsWith("javax.")) {
+            // verify that groupId starts with groupIdPrefix
+            if (!artifact.getGroupId().startsWith(groupIdPrefix)) {
                 errors.add(String.format(
-                        "WARNING: groupId (%s) must start with \"javax\"",
-                        artifact.getGroupId()));
+                        "WARNING: groupId (%s) must start with \"%s\"",
+                        artifact.getGroupId(),
+                        groupIdPrefix));
             }
 
             // verify that artifactId does end with -api
@@ -273,16 +388,17 @@ public class Spec {
                         API_SUFFIX));
             }
 
-            // verify that apiPackage starts with javax.
-            if (!apiPackage.startsWith("javax.")) {
+            // verify that apiPackage starts with groupIdPrefix
+            if (!apiPackage.startsWith(groupIdPrefix)) {
                 errors.add(String.format(
-                        "WARNING: API packages (%s) must start with \"javax\"",
-                        apiPackage));
+                        "WARNING: API packages (%s) must start with \"%s\"",
+                        apiPackage,
+                        groupIdPrefix));
             }
 
             // verify that Bundle-SymbolicName == apiPackage-api
             String symbolicName = apiPackage.concat(API_SUFFIX);
-            
+
             if (!getMetadata().getBundleSymbolicName().isEmpty()
                     && !symbolicName.equals(getMetadata().getBundleSymbolicName())) {
                 errors.add(String.format(
@@ -295,7 +411,7 @@ public class Spec {
             if (jar != null) {
                 checkClasses(jar, apiPackage);
             }
-            
+
             if (nonFinal) {
                 // verify new spec version
                 if (!newSpecVersion.matches("[0-9]+\\.[0-9]+")) {
@@ -304,7 +420,7 @@ public class Spec {
                             newSpecVersion,
                             JCP_VERSION_RULE));
                 }
-                
+
                 // verify that specVersion != newSpecVersion
                 if (specVersion.equals(newSpecVersion)) {
                     errors.add(String.format(
@@ -344,11 +460,12 @@ public class Spec {
                 }
             }
         } else {
-            // verify that groupId starts with javax.
-            if (artifact.getGroupId().startsWith("javax.")) {
+            // verify that groupId starts with groupIdPrefix
+            if (artifact.getGroupId().startsWith(groupIdPrefix)) {
                 errors.add(String.format(
-                        "WARNING: groupId (%s) should not start with \"javax.\"",
-                        artifact.getGroupId()));
+                        "WARNING: groupId (%s) should not start with \"%s\"",
+                        artifact.getGroupId(),
+                        groupIdPrefix));
             }
 
             // verify that artifactId does not end with -api
@@ -359,11 +476,12 @@ public class Spec {
                         API_SUFFIX));
             }
 
-            // verify that apiPackage starts with javax.
-            if (!apiPackage.startsWith("javax.")) {
+            // verify that apiPackage starts with groupIdPrefix
+            if (!apiPackage.startsWith(groupIdPrefix)) {
                 errors.add(String.format(
-                        "WARNING: API packages (%s) must start with \"javax\"",
-                        apiPackage));
+                        "WARNING: API packages (%s) must start with \"%s\"",
+                        apiPackage,
+                        groupIdPrefix));
             }
 
             // verify that Bundle-SymbolicName == implNamespace.apiPackage
@@ -415,23 +533,35 @@ public class Spec {
         }
     }
 
+    /**
+     * Get the Spec Artifact.
+     * @return the artifact
+     */
     public Artifact getArtifact() {
         return artifact;
     }
 
+    /**
+     * Get the Spec Metadata.
+     * @return the metadata
+     */
+    @SuppressWarnings("checkstyle:LineLength")
     public Metadata getMetadata() {
         if (metadata != null) {
             return metadata;
         }
 
+        Objects.requireNonNull(specVersion, "specVersion is null");
+        Objects.requireNonNull(apiPackage, "apiPackage is null");
+
         if (jarType.equals(JarType.api)) {
             if (!nonFinal) {
-                //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
-                //  OSGi bundle specversion:	${SPEC_VERSION}
-                //  OSGi Bundle-Version:	${SPEC_IMPL_VERSION}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}
-                //  jar Implementation-Version:	${SPEC_IMPL_VERSION}
+                //  OSGi Bundle-SymbolicName:   ${API_PACKAGE}-api
+                //  OSGi bundle specversion:    ${SPEC_VERSION}
+                //  OSGi Bundle-Version:        ${SPEC_IMPL_VERSION}
+                //  jar Extension-Name:         ${API_PACKAGE}
+                //  jar Specification-Version:  ${SPEC_VERSION}
+                //  jar Implementation-Version: ${SPEC_IMPL_VERSION}
 
                 metadata = new Metadata(
                         apiPackage + Spec.API_SUFFIX,
@@ -442,14 +572,14 @@ public class Spec {
                         specImplVersion);
 
             } else {
-                //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
-                //  OSGi bundle specversion:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  OSGi Bundle-Version:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}.99.${SPEC_BUILD}
-                //  jar Implementation-Version:	${NEW_SPEC_VERSION}-b${SPEC_BUILD}
-                
-                String osgiVersion = 
+                //  OSGi Bundle-SymbolicName:   ${API_PACKAGE}-api
+                //  OSGi bundle specversion:    ${SPEC_VERSION}.99.b${SPEC_BUILD}
+                //  OSGi Bundle-Version:        ${SPEC_VERSION}.99.b${SPEC_BUILD}
+                //  jar Extension-Name:         ${API_PACKAGE}
+                //  jar Specification-Version:  ${SPEC_VERSION}.99.${SPEC_BUILD}
+                //  jar Implementation-Version: ${NEW_SPEC_VERSION}-b${SPEC_BUILD}
+
+                String osgiVersion =
                         specVersion + NONFINAL_BUILD_SEPARATOR + specBuild;
                 metadata = new Metadata(
                         apiPackage + Spec.API_SUFFIX,
@@ -463,12 +593,12 @@ public class Spec {
             String symbolicName = implNamespace + "." + apiPackage;
 
             if (!nonFinal) {
-                //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
-                //  OSGi bundle specversion:	${SPEC_VERSION}
-                //  OSGi Bundle-Version:	${IMPL_VERSION}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}
-                //  jar Implementation-Version:	${IMPL_VERSION}
+                //  OSGi Bundle-SymbolicName:   ${IMPL_NAMESPACE}.${API_PACKAGE}
+                //  OSGi bundle specversion:    ${SPEC_VERSION}
+                //  OSGi Bundle-Version:        ${IMPL_VERSION}
+                //  jar Extension-Name:         ${API_PACKAGE}
+                //  jar Specification-Version:  ${SPEC_VERSION}
+                //  jar Implementation-Version: ${IMPL_VERSION}
 
                 metadata = new Metadata(
                         symbolicName,
@@ -479,12 +609,12 @@ public class Spec {
                         artifact.getAbsoluteVersion());
             } else {
 
-                //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
-                //  OSGi bundle specversion:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  OSGi Bundle-Version:	${OSGI_IMPL_VERSION}.99.b${IMPL_BUILD}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}.99.${SPEC_BUILD}
-                //  jar Implementation-Version:	${NEW_IMPL_VERSION}-b${IMPL_BUILD}
+                //  OSGi Bundle-SymbolicName:   ${IMPL_NAMESPACE}.${API_PACKAGE}
+                //  OSGi bundle specversion:    ${SPEC_VERSION}.99.b${SPEC_BUILD}
+                //  OSGi Bundle-Version:        ${OSGI_IMPL_VERSION}.99.b${IMPL_BUILD}
+                //  jar Extension-Name:         ${API_PACKAGE}
+                //  jar Specification-Version:  ${SPEC_VERSION}.99.${SPEC_BUILD}
+                //  jar Implementation-Version: ${NEW_IMPL_VERSION}-b${IMPL_BUILD}
 
                 ArtifactVersion implAv = new DefaultArtifactVersion(implVersion);
 
@@ -500,84 +630,160 @@ public class Spec {
         return metadata;
     }
 
+    /**
+     * Get the errors collected during verification.
+     * @return the list of errors
+     */
     public List<String> getErrors() {
         return errors;
     }
 
-    public void setApiPackage(String apiPackage) {
-        this.apiPackage = apiPackage != null ? apiPackage : "";
+    /**
+     * Set the groupId prefix for this spec.
+     * @param prefix the groupId prefix to use
+     */
+    public void setGroupIdPrefix(final String prefix) {
+        if (prefix != null && !prefix.isEmpty()) {
+            this.groupIdPrefix = prefix;
+        }
     }
 
-    public void setImplNamespace(String implNamespace) {
-        this.implNamespace = implNamespace != null ? implNamespace : "";
+    /**
+     * Set the API package for this spec.
+     * @param pkg the apiPackage to use
+     */
+    public void setApiPackage(final String pkg) {
+        if (pkg != null && !pkg.isEmpty()) {
+            this.apiPackage = pkg;
+        }
     }
 
-    public void setImplVersion(String implVersion) {
-        this.implVersion = implVersion != null ? 
-                Artifact.stripSnapshotQualifier(implVersion) : "";
+    /**
+     * Set the implementation namespace for this spec.
+     * @param namespace the implementation namespace
+     */
+    public void setImplNamespace(final String namespace) {
+        this.implNamespace = namespace != null ? namespace : "";
     }
 
-    public void setSpecVersion(String specVersion) {
-        this.specVersion = specVersion != null ? specVersion : "";
+    /**
+     * Set the implementation version for this spec.
+     * @param version the implementation version
+     */
+    public void setImplVersion(final String version) {
+        this.implVersion = version != null
+                ? Artifact.stripSnapshotQualifier(version) : "";
     }
 
-    public void setNewImplVersion(String newImplVersion) {
-        this.newImplVersion = newImplVersion != null ? newImplVersion : "";
+    /**
+     * Set the spec version for this spec.
+     * @param version the spec version
+     */
+    public void setSpecVersion(final String version) {
+        if (version != null && !version.isEmpty()) {
+            this.specVersion = version;
+        }
     }
 
-    public void setSpecBuild(String specBuild) {
-        this.specBuild = specBuild != null ? specBuild : "";
+    /**
+     * Set the new spec implementation version for this spec.
+     * @param version the spec version
+     */
+    public void setNewImplVersion(final String version) {
+        this.newImplVersion = version != null ? version : "";
     }
 
-    public void setSpecImplVersion(String specImplVersion) {
-        this.specImplVersion = specImplVersion != null ? 
-                Artifact.stripSnapshotQualifier(specImplVersion) : "";
+    /**
+     * Set the spec build for this spec.
+     * @param build the spec build
+     */
+    public void setSpecBuild(final String build) {
+        this.specBuild = build != null ? build : "";
     }
 
-    public void setNewSpecVersion(String newSpecVersion) {
-        this.newSpecVersion = newSpecVersion != null ? newSpecVersion : "";
+    /**
+     * Set the spec implementation version for this spec.
+     * @param version the spec implementation version
+     */
+    public void setSpecImplVersion(final String version) {
+        this.specImplVersion = version != null
+                ? Artifact.stripSnapshotQualifier(version) : "";
     }
 
-    public void setImplBuild(String implBuild) {
-        this.implBuild = implBuild != null ? implBuild : "";
+    /**
+     * Set the new spec version for this spec.
+     * @param version the new spec version
+     */
+    public void setNewSpecVersion(final String version) {
+        this.newSpecVersion = version != null ? version : "";
     }
 
-    public void setArtifact(Artifact artifact) {
-        this.artifact = artifact;
+    /**
+     * Set the implementation build for this spec.
+     * @param build the implementation build
+     */
+    public void setImplBuild(final String build) {
+        this.implBuild = build != null ? build : "";
     }
 
-    public void setNonFinal(boolean nonFinal) {
-        this.nonFinal = nonFinal;
+    /**
+     * Set the artifact for this spec.
+     * @param a the artifact to use
+     */
+    public void setArtifact(final Artifact a) {
+        this.artifact = a;
     }
 
-    public void setJarType(String jarType) {
-        this.jarType = JarType.valueOf(jarType);
+    /**
+     * Set the spec non final flag.
+     * @param nfinal the non final value to use
+     */
+    public void setNonFinal(final boolean nfinal) {
+        this.nonFinal = nfinal;
     }
 
-    public void setMetadata(Metadata metadata) {
-        this.metadata = metadata;
+    /**
+     * Set the spec JAR type.
+     * @param type the JAR type to use
+     */
+    public void setJarType(final String type) {
+        this.jarType = JarType.valueOf(type);
     }
-    
+
+    /**
+     * Set metadata for this spec.
+     * @param mdata the metadata use
+     */
+    public void setMetadata(final Metadata mdata) {
+        this.metadata = mdata;
+    }
+
+    /**
+     * Create a readable inline description of the spec.
+     * @return the description as a string
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if(jarType == null){
+        if (jarType == null) {
             return sb.toString();
         }
         sb.append("{");
-        if (specVersion!= null && !specVersion.isEmpty()){
+        sb.append(" groupIdPrefix=");
+        sb.append(groupIdPrefix);
+        if (specVersion != null && !specVersion.isEmpty()) {
             sb.append(" spec-version=");
             sb.append(specVersion);
-        }        
-        if (apiPackage!= null && !apiPackage.isEmpty()) {
+        }
+        if (apiPackage != null && !apiPackage.isEmpty()) {
             sb.append(" apiPackage=");
             sb.append(apiPackage);
         }
-        if(jarType.equals(JarType.impl)){
+        if (jarType.equals(JarType.impl)) {
             sb.append(" standalone-impl");
             sb.append(" impl-namespace=");
             sb.append(implNamespace);
-            if(nonFinal){
+            if (nonFinal) {
                 sb.append(" non-final");
                 sb.append(" new-spec-version=");
                 sb.append(newSpecVersion);
@@ -592,12 +798,12 @@ public class Spec {
             sb.append(implVersion);
         } else {
             sb.append(" API");
-            if(nonFinal){
+            if (nonFinal) {
                 sb.append(" non-final");
                 sb.append(" new-spec-version=");
                 sb.append(newSpecVersion);
                 sb.append(" spec-build=");
-                sb.append(specBuild);        
+                sb.append(specBuild);
             } else {
                 sb.append(" final");
                 sb.append(" spec-impl-version=");

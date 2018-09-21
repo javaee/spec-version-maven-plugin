@@ -44,9 +44,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
-	<groupId>net.java</groupId>
-	<artifactId>jvnet-parent</artifactId>
-	<version>4</version>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.glassfish.build</groupId>
@@ -76,12 +76,12 @@
     </organization>
 
     <licenses>
-        <license>
-            <name>CDDL + GPLv2 with classpath exception</name>
-            <url>http://glassfish.java.net/nonav/public/CDDL+GPL.html</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
+      <license>
+        <name>CDDL + GPLv2 with classpath exception</name>
+        <url>https://javaee.github.io/glassfish/LICENSE</url>
+        <distribution>repo</distribution>
+        <comments>A business-friendly OSS license</comments>
+      </license>
     </licenses>
 
     <issueManagement>
@@ -89,57 +89,175 @@
         <url>https://github.com/javaee/spec-version-maven-plugin/issues</url>
     </issueManagement>
 
+    <mailingLists>
+        <mailingList>
+            <name>glassfish</name>
+            <subscribe>glassfish+subscribe@javaee.groups.io</subscribe>
+            <post>glassfish@javaee.groups.io</post>
+        </mailingList>
+    </mailingLists>
+
     <scm>
-        <connection>
-	  scm:git:https://github.com/javaee/spec-version-maven-plugin.git
-	</connection>
-        <developerConnection>
-	  scm:git:git@github.com:javaee/spec-version-maven-plugin.git
-	</developerConnection>
-        <url>https://github.com/javaee/spec-version-maven-plugin</url>
+      <connection>scm:git:git://github.com/javaee/spec-version-maven-plugin.git</connection>
+      <developerConnection>scm:git:git://github.com/javaee/spec-version-maven-plugin.git</developerConnection>
+      <url>https://github.com/javaee/glassfish</url>
       <tag>HEAD</tag>
-  </scm>
+    </scm>
+
+    <properties>
+        <maven.version>3.3.9</maven.version>
+        <release.arguments />
+    </properties>
 
     <build>
-	<defaultGoal>install</defaultGoal>
+        <defaultGoal>install</defaultGoal>
         <filters>
             <filter>src/test/resources/test-sets.properties</filter>
         </filters>
         <resources>
-             <resource>
-                 <directory>src/main/resources</directory>
-                 <includes>
-                     <include>checkVersion.sh</include>
-                 </includes>
-                 <filtering>true</filtering>
-                 <targetPath>${project.build.directory}</targetPath>
-             </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>checkVersion.sh</include>
+                </includes>
+                <filtering>true</filtering>
+                <targetPath>${project.build.directory}</targetPath>
+            </resource>
         </resources>
         <testResources>
             <testResource>
-		<directory>src/test/resources</directory>
+                <directory>src/test/resources</directory>
                 <includes>
                     <include>org/glassfish/spec/test/sets/**</include>
                 </includes>
                 <targetPath>${project.build.directory}/test-sets</targetPath>
-		<filtering>true</filtering>
+                <filtering>true</filtering>
             </testResource>
             <testResource>
-		<directory>src/it/</directory>
+                <directory>src/it/</directory>
                 <targetPath>${project.build.directory}/it</targetPath>
-		<filtering>true</filtering>
+                <filtering>true</filtering>
             </testResource>
         </testResources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.7</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.9.1</version>
+                    <configuration>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-invoker-plugin</artifactId>
+                    <version>1.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.12</version>
+                    <configuration>
+                        <forkMode>none</forkMode>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>2.17</version>
+                    <configuration>
+                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                        <configLocation>${basedir}/checkstyle.xml</configLocation>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>8.11</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.glassfish.copyright</groupId>
+                    <artifactId>glassfish-copyright-maven-plugin</artifactId>
+                    <version>1.50</version>
+                    <configuration>
+                        <scm>git</scm>
+                        <scmOnly>true</scmOnly>
+                        <exclude>
+                            <pattern>/LICENSE</pattern>
+                            <pattern>/CONTRIBUTING.md</pattern>
+                            <pattern>/README.md</pattern>
+                        </exclude>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5.3</version>
+                    <configuration>
+                        <mavenExecutorId>forked-path</mavenExecutorId>
+                        <useReleaseProfile>false</useReleaseProfile>
+                        <tagNameFormat>@{project.version}</tagNameFormat>
+                        <arguments>${release.arguments}</arguments>
+                        <preparationGoals>install</preparationGoals>
+                        <goals>deploy</goals>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.scm</groupId>
+                            <artifactId>maven-scm-provider-gitexe</artifactId>
+                            <version>1.9.4</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.6</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <configuration>
+                    <goalPrefix>spec-version</goalPrefix>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
                 <executions>
                     <execution>
                         <id>add-test-source</id>
@@ -157,96 +275,7 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.0.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-plugin-plugin</artifactId>
-                <version>2.8</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-		                    <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-    		            <execution>
-      		              <id>attach-sources</id>
-      		              <goals>
-        	                  <goal>jar</goal>
-      		              </goals>
-    		            </execution>
-  		          </executions>
-	          </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.8</version>
-               <configuration>
-                   <additionalparam>-Xdoclint:none</additionalparam>
-               </configuration>
-               <executions>
-                   <execution>
-                       <id>attach-javadocs</id>
-                       <goals>
-                           <goal>jar</goal>
-                       </goals>
-                   </execution>
-                   <execution>
-                       <phase>javadoc</phase>
-                       <goals>
-                           <goal>javadoc</goal>
-                       </goals>
-                   </execution>
-               </executions>
-           </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <tagNameFormat>@{project.version}</tagNameFormat>
-                    <arguments>${release.arguments}</arguments>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-invoker-plugin</artifactId>
-                <version>1.8</version>
-                <configuration>
-                    <pomIncludes>
-                        <pomInclude>modules/*/pom.xml</pomInclude>
-                    </pomIncludes>
-                    <goals>
-                        <goal>clean</goal>
-                        <goal>package</goal>
-                    </goals>
-                    <projectsDirectory>${basedir}/target/it</projectsDirectory>
-                    <streamLogs>true</streamLogs>
-                </configuration>
                 <executions>
                     <execution>
                         <id>build-it-modules</id>
@@ -255,6 +284,15 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
+                            <pomIncludes>
+                                <pomInclude>modules/*/pom.xml</pomInclude>
+                            </pomIncludes>
+                            <goals>
+                                <goal>clean</goal>
+                                <goal>package</goal>
+                            </goals>
+                            <projectsDirectory>${basedir}/target/it</projectsDirectory>
+                            <streamLogs>true</streamLogs>
                             <skipInvocation>${maven.test.skip}</skipInvocation>
                         </configuration>
                     </execution>
@@ -263,10 +301,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.12</version>
-                <configuration>
-                    <forkMode>none</forkMode>
-                </configuration>
                 <executions>
                     <execution>
                         <id>default-test</id>
@@ -293,20 +327,50 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.glassfish.copyright</groupId>
+                <artifactId>glassfish-copyright-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>copyright</goal>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>3.5.2</version>
         </dependency>
     </dependencies>
 </project>

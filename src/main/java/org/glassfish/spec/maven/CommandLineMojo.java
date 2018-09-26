@@ -98,10 +98,10 @@ public final class CommandLineMojo extends AbstractMojo {
     private String implNamespace;
 
     /**
-     * GroupId prefix.
+     * Mode. Allowed values are "javaee", "jakarta"
      */
-    @Parameter(property = "groupIdPrefix", defaultValue = "javax.")
-    private String groupIdPrefix;
+    @Parameter(property = "specMode", defaultValue = "javaee")
+    private String specMode;
 
     /**
      * API package.
@@ -224,6 +224,7 @@ public final class CommandLineMojo extends AbstractMojo {
             printParam("specbuild", "num\tbuild number of spec API jar file");
             printParam("newimplversion", "vers\tversion number of the implementation when final");
             printParam("implbuild", "num\tbuild number of implementation jar file");
+            printParam("specMode", "specMode\t'javaee' or 'jakarta'");
             return;
         }
 
@@ -236,6 +237,7 @@ public final class CommandLineMojo extends AbstractMojo {
                 fis = new FileInputStream(properties);
                 p.load(fis);
                 fis.close();
+                specMode = p.getProperty("SPEC_MODE", specMode);
                 apiPackage = p.getProperty("API_PACKAGE", apiPackage);
                 implNamespace = p.getProperty("IMPL_NAMESPACE", implNamespace);
                 jarType = p.getProperty("JAR_TYPE", jarType);
@@ -325,7 +327,7 @@ public final class CommandLineMojo extends AbstractMojo {
                 jarType = JarType.api.name();
             }
 
-            groupIdPrefix = prompt("Enter the groupId prefix (e.g., javax.)");
+            specMode = prompt("Enter the spec mode ('javaee' or 'jakarta')");
             apiPackage = prompt("Enter the main API package (e.g., javax.wombat)");
             specVersion = prompt("Enter the version number of the JCP specification");
 
@@ -349,7 +351,7 @@ public final class CommandLineMojo extends AbstractMojo {
         // TODO remove mojo parameters and replace with spec.
         Spec spec = new Spec();
         spec.setArtifact(artifact);
-        spec.setGroupIdPrefix(groupIdPrefix);
+        spec.setGroupIdPrefix(specMode.equals("jakarta") ? Spec.JAKARTA_GROUP_ID : Spec.JAVAX_GROUP_ID);
         spec.setSpecVersion(specVersion);
         spec.setNewSpecVersion(newSpecVersion);
         spec.setSpecImplVersion(specImplVersion);

@@ -59,6 +59,16 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 public class Spec {
 
     /**
+     * GroupId used for JavaEE specs.
+     */
+    public static final String JAVAX_GROUP_ID = "javax.";
+
+    /**
+     * GroupId used for JakartaEE specs.
+     */
+    public static final String JAKARTA_GROUP_ID = "jakarta.";
+
+    /**
      * The Spec Artifact.
      */
     private Artifact artifact;
@@ -121,7 +131,7 @@ public class Spec {
     /**
      * The Spec GroupId Prefix.
      */
-    private String groupIdPrefix = "javax.";
+    private String groupIdPrefix;
 
     /**
      * The Spec Final flag.
@@ -388,8 +398,8 @@ public class Spec {
                         API_SUFFIX));
             }
 
-            // verify that apiPackage starts with groupIdPrefix
-            if (!apiPackage.startsWith(groupIdPrefix)) {
+            // verify that apiPackage starts with javax
+            if (!apiPackage.startsWith(JAVAX_GROUP_ID)) {
                 errors.add(String.format(
                         "WARNING: API packages (%s) must start with \"%s\"",
                         apiPackage,
